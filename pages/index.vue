@@ -19,7 +19,10 @@
         </v-toolbar>
 
         <div class="camera-box">
-          <video ref="camera" width="100%" autoplay></video>
+          <video id="vid" ref="camera" width="100%" autoplay></video>
+          <div class="frame-box">
+            <div class="frame-radius"></div>
+          </div>
         </div>
       </v-dialog>
 
@@ -32,7 +35,7 @@
 export default {
   data() {
     return {
-      isCameraOpen: false,
+      isCameraOpen: false
     };
   },
   methods: {
@@ -50,16 +53,16 @@ export default {
         audio: false,
         video: {
           width: 768,
-          height: 1024,
-        },
+          height: 1024
+        }
       });
 
       navigator.mediaDevices
         .getUserMedia(constraints)
-        .then((stream) => {
+        .then(stream => {
           this.$refs.camera.srcObject = stream;
         })
-        .catch((error) => {
+        .catch(error => {
           console.log(error);
           alert("May the browser didn't support or there is some errors.");
         });
@@ -67,23 +70,45 @@ export default {
     stopCameraStream() {
       let tracks = this.$refs.camera.srcObject.getTracks();
 
-      tracks.forEach((track) => {
+      tracks.forEach(track => {
         track.stop();
       });
-    },
-  },
+    }
+  }
 };
 </script>
 
-<style>
+<style lang="scss">
 .camera-box {
   position: absolute;
-  /* top: 20px; */
-  /* right: 20px; */
-  /* bottom: 20px; */
-  /* left: 20px; */
-  /* box-shadow: 0px 0px 20px 56px rgba(0, 0, 0, 0.6); */
-  border: 1px solid #ffffff;
-  border-radius: 10px;
+  height: calc(100% - 56px);
+  background: black;
+}
+#vid {
+  height: 100%;
+}
+.frame {
+  &-box {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0px;
+    border-right: 50px solid black;
+    border-left: 50px solid black;
+    border-top: 100px solid black;
+    border-bottom: 100px solid black;
+    opacity: 0.5;
+  }
+
+  &-radius {
+    width: 107%;
+    height: 106%;
+    background: transparent;
+    border-radius: 23px;
+    border: 13px solid black;
+    position: absolute;
+    top: -7px;
+    left: -7px;
+  }
 }
 </style>
