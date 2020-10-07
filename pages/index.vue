@@ -269,6 +269,11 @@ export default {
       window.addEventListener(
         "orientationchange",
         () => {
+          this.capturedImage = null;
+          this.isCameraOpen = false;
+          this.isImageCaptured = false;
+          this.stopCameraStream();
+
           if (screen.orientation) {
             angle = screen.orientation.angle;
           } else {
