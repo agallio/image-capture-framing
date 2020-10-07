@@ -187,7 +187,7 @@ export default {
             stream.getTracks().forEach((track) => track.stop());
 
             this.deviceCount().then((deviceCount) => {
-              this.amountOfCameras = 0;
+              this.amountOfCameras = deviceCount;
 
               // Init the UI and the camera stream
               this.initCameraUI();
@@ -362,16 +362,30 @@ export default {
       let width = video.videoWidth;
       let height = video.videoHeight;
 
+      // let maxSize = 1024;
+
+      // if (width > height) {
+      //   if (width > maxSize) {
+      //     height *= maxSize / width;
+      //     width = maxSize;
+      //   }
+      // } else {
+      //   if (height > maxSize) {
+      //     width *= maxSize / height;
+      //     height = maxSize;
+      //   }
+      // }
+
       canvas.width = width;
       canvas.height = height;
 
-      context = canvas.getContext("2d");
+      let context = canvas.getContext("2d");
       context.drawImage(video, 0, 0, width, height);
 
       const getCanvasBlob = (canvas) => {
-        return new Promise((resolve) =>
-          canvas.toBlob((blob) => resolve(blob), "image/jpeg")
-        );
+        return new Promise((resolve) => {
+          canvas.toBlob((blob) => resolve(blob), "image/jpeg");
+        });
       };
 
       let imageFile;
