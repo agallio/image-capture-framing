@@ -9,8 +9,11 @@
     "generate": "nuxt generate"
   },
   "dependencies": {
+    "adapterjs": "^0.15.5",
     "core-js": "^3.6.5",
-    "nuxt": "^2.14.5"
+    "detectrtc": "^1.4.1",
+    "nuxt": "^2.14.5",
+    "screenfull": "^5.0.2"
   },
   "devDependencies": {
     "@nuxtjs/vuetify": "^1.11.2"

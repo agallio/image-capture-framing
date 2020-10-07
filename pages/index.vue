@@ -7,21 +7,44 @@
         hide-overlay
         transition="dialog-bottom-transition"
       >
-        <v-toolbar dark color="primary">
-          <v-btn icon dark @click="isCameraOpen = false">
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
-          <v-toolbar-title>Settings</v-toolbar-title>
-          <v-spacer></v-spacer>
-          <v-toolbar-items>
-            <v-btn dark text @click="isCameraOpen = false"> Save </v-btn>
-          </v-toolbar-items>
-        </v-toolbar>
-
-        <div class="camera-box">
-          <video id="vid" ref="camera" width="100%" autoplay></video>
-          <div class="frame-box">
-            <div class="frame-radius"></div>
+        <div class="dialog-content">
+          <div id="container" ref="container">
+            <div id="vid_container" ref="vidContainer">
+              <video ref="video" id="video" autoplay playsinline></video>
+              <div id="video_overlay">
+                <v-btn icon dark x-large @click="toggleCamera">
+                  <v-icon>mdi-close</v-icon>
+                </v-btn>
+              </div>
+            </div>
+            <div id="gui_controls" ref="guiControls">
+              <button
+                class="cam-btn"
+                ref="switchCameraButton"
+                id="switchCameraButton"
+                name="switch Camera"
+                type="button"
+                aria-pressed="false"
+                @click="toggleSwitchCamera"
+              ></button>
+              <button
+                class="cam-btn"
+                ref="takePhotoButton"
+                id="takePhotoButton"
+                name="take Photo"
+                type="button"
+                @click="takePhotoButton"
+              ></button>
+              <button
+                class="cam-btn"
+                ref="toggleFullScreenButton"
+                id="toggleFullScreenButton"
+                name="toggle FullScreen"
+                type="button"
+                aria-pressed="false"
+                @click="toggleFullScreen"
+              ></button>
+            </div>
           </div>
         </div>
       </v-dialog>
@@ -32,10 +55,17 @@
 </template>
 
 <script>
+import screenfull from "screenfull";
+
 export default {
   data() {
     return {
-      isCameraOpen: false
+      isCameraOpen: false,
+
+      // Camera
+      video: null,
+      amountOfCameras: 0,
+      currentFacingMode: "environment",
     };
   },
   methods: {
@@ -49,66 +79,369 @@ export default {
       }
     },
     createCameraElement() {
-      const constraints = (window.constraints = {
+      if (
+        navigator.mediaDevices &&
+        navigator.mediaDevices.getUserMedia &&
+        navigator.mediaDevices.enumerateDevices
+      ) {
+        navigator.mediaDevices
+          .getUserMedia({ audio: false, video: true })
+          .then((stream) => {
+            stream.getTracks().forEach((track) => track.stop());
+
+            console.log("halo");
+            this.deviceCount().then((deviceCount) => {
+              this.amountOfCameras = deviceCount;
+
+              // Init the UI and the camera stream
+              this.initCameraUI();
+              this.initCameraStream();
+            });
+          })
+          .catch((err) => {
+            if (err === "PermissionDeniedError") {
+              alert("Permission denied. Please refresh and give permission.");
+            }
+
+            console.error(`getUserMedia() error: ${err}`);
+          });
+      } else {
+        alert(
+          "Mobile camera is not supported by browser, or there is no camera detected/connected"
+        );
+        this.isCameraOpen = false;
+      }
+    },
+    stopCameraStream() {
+      let tracks = this.$refs.video.srcObject.getTracks();
+
+      tracks.forEach((track) => {
+        track.stop();
+      });
+    },
+
+    deviceCount() {
+      return new Promise((resolve) => {
+        let videoInCount = 0;
+
+        navigator.mediaDevices
+          .enumerateDevices()
+          .then((devices) =>
+            devices.forEach((device) => {
+              if (device.kind === "video") {
+                device.kind = "videoinput";
+              }
+
+              if (device.kind === "videoinput") {
+                videoInCount++;
+                console.log(`Videocam : ${device.label}`);
+              }
+
+              resolve(videoInCount);
+            })
+          )
+          .catch((err) => {
+            console.log(`${err.name} : ${err.message}`);
+            resolve(0);
+          });
+      });
+    },
+    initCameraUI() {
+      const takePhotoButton = this.$refs.takePhotoButton;
+      const toggleFullScreenButton = this.$refs.toggleFullScreenButton;
+      const switchCameraButton = this.$refs.switchCameraButton;
+
+      const fullScreenChange = () => {
+        if (screenfull.isFullscreen) {
+          toggleFullScreenButton.setAttribute("aria-pressed", true);
+        } else {
+          toggleFullScreenButton.setAttribute("aria-pressed", false);
+        }
+      };
+
+      if (screenfull.isEnabled) {
+        screenfull.on("change", fullScreenChange);
+
+        toggleFullScreenButton.style.display = "block";
+
+        fullScreenChange();
+      } else {
+        console.log("iOS doesn't support fullscreen (yet)");
+      }
+
+      if (this.amountOfCameras > 1) {
+        switchCameraButton.style.display = "block";
+      }
+
+      let angle;
+      window.addEventListener(
+        "orientationchange",
+        () => {
+          if (screen.orientation) {
+            angle = screen.orientation.angle;
+          } else {
+            angle = window.orientation;
+          }
+
+          const guiControls = this.$refs.guiControls.classList;
+          const vidContainer = this.$refs.vidContainer.classList;
+
+          if (angle === 270 || angle === -90) {
+            guiControls.add("left");
+            vidContainer.add("left");
+          } else {
+            if (guiControls.contains("left")) guiControls.remove("left");
+            if (vidContainer.contains("left")) vidContainer.remove("left");
+          }
+        },
+        false
+      );
+    },
+    initCameraStream() {
+      let video = document.getElementById("video");
+      const switchCameraButton = this.$refs.switchCameraButton;
+
+      if (window.stream) {
+        window.stream.getTracks().forEach((track) => {
+          console.log(track);
+          track.stop();
+        });
+      }
+
+      const size = 1280;
+      const constraints = {
         audio: false,
         video: {
-          width: 768,
-          height: 1024
-        }
-      });
+          width: { ideal: size },
+          height: { ideal: size },
+          facingMode: this.currentFacingMode,
+        },
+      };
 
       navigator.mediaDevices
         .getUserMedia(constraints)
-        .then(stream => {
-          this.$refs.camera.srcObject = stream;
-        })
-        .catch(error => {
-          console.log(error);
-          alert("May the browser didn't support or there is some errors.");
-        });
-    },
-    stopCameraStream() {
-      let tracks = this.$refs.camera.srcObject.getTracks();
+        .then((stream) => {
+          window.stream = stream;
+          video.srcObject = stream;
 
-      tracks.forEach(track => {
-        track.stop();
+          if (constraints.video.facingMode) {
+            if (constraints.video.facingMode === "environment") {
+              switchCameraButton.setAttribute("aria-pressed", true);
+            } else {
+              switchCameraButton.setAttribute("aria-pressed", false);
+            }
+          }
+
+          const track = window.stream.getVideoTracks()[0];
+          const settings = track.getSettings();
+          console.log(`Settings : ${JSON.stringify(settings, null, 4)}`);
+        })
+        .catch((err) => console.error(`getUserMedia() error : ${err}`));
+    },
+    takePhotoButton() {
+      this.takeSnapshot();
+    },
+    toggleFullScreen() {
+      screenfull.toggle(this.$refs.container).then(() => {
+        console.log(
+          `Fullscreen mode : ${
+            screenfull.isFullscreen ? "enabled" : "disabled"
+          }`
+        );
       });
-    }
-  }
+    },
+    toggleSwitchCamera() {
+      if (currentFacingMode === "environment") {
+        this.currentFacingMode = "user";
+      } else {
+        this.currentFacingMode = "environment";
+      }
+
+      this.initCameraStream();
+    },
+    takeSnapshot() {
+      let canvas = document.createElement("canvas");
+      let video = document.getElementById("video");
+
+      let width = video.videoWidth;
+      let height = video.videoHeight;
+
+      canvas.width = width;
+      canvas.height = height;
+
+      let context = canvas.getContext("2d");
+      context.drawImage(video, 0, 0, width, height);
+
+      const getCanvasBlob = (canvas) => {
+        return new Promise((resolve) => {
+          canvas.toBlob((blob) => resolve(blob), "image/jpeg");
+        });
+      };
+
+      getCanvasBlob(canvas).then((blob) => {
+        console.log(blob);
+      });
+    },
+  },
 };
 </script>
 
 <style lang="scss">
-.camera-box {
-  position: absolute;
-  height: calc(100% - 56px);
-  background: black;
-}
-#vid {
+.dialog-content {
+  margin: 0;
+  padding: 0;
+  width: 100%;
   height: 100%;
+  background: #000;
 }
-.frame {
-  &-box {
+
+#vid_container {
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+#video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+#gui_controls {
+  position: fixed;
+  background-color: #111; /*rgba(255, 0, 0, 0.5);*/
+  z-index: 2;
+  bottom: 0;
+}
+
+#video_overlay {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  z-index: 10;
+  background-color: transparent;
+}
+
+.cam-btn {
+  outline: none;
+  position: absolute;
+  color: white;
+  display: block;
+  opacity: 1;
+  background: transparent;
+  border: solid 2px #fff;
+  padding: 0;
+  text-shadow: 0px 0px 4px black;
+  background-position: center center;
+  background-repeat: no-repeat;
+  pointer-events: auto;
+  z-index: 2;
+}
+
+#takePhotoButton {
+  left: calc(50% - 40px);
+  top: calc(50% - 40px);
+  width: 80px;
+  height: 80px;
+  background-image: url("/ic_photo_camera_white_48px.svg");
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+#takePhotoButton:active {
+  background-color: #fff;
+}
+
+#toggleFullScreenButton {
+  display: none;
+  width: 64px;
+  height: 64px;
+  background-image: url("/ic_fullscreen_white_48px.svg");
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+#toggleFullScreenButton[aria-pressed="true"] {
+  background-image: url("/ic_fullscreen_exit_white_48px.svg");
+}
+
+#switchCameraButton {
+  display: none;
+  width: 64px;
+  height: 64px;
+  background-image: url("/ic_camera_rear_white_36px.svg");
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+#switchCameraButton[aria-pressed="true"] {
+  background-image: url("/ic_camera_front_white_36px.svg");
+}
+
+@media screen and (orientation: portrait) {
+  /* portrait-specific styles */
+
+  /* video_container (video) doesn't respect height... 
+       so we will fill it in completely in portrait mode
+    */
+  #vid_container {
     width: 100%;
-    height: 100%;
-    position: absolute;
-    top: 0px;
-    border-right: 50px solid black;
-    border-left: 50px solid black;
-    border-top: 100px solid black;
-    border-bottom: 100px solid black;
-    opacity: 0.5;
+    height: 80%;
   }
 
-  &-radius {
-    width: 107%;
-    height: 106%;
-    background: transparent;
-    border-radius: 23px;
-    border: 13px solid black;
-    position: absolute;
-    top: -7px;
-    left: -7px;
+  #gui_controls {
+    width: 100%;
+    height: 20%;
+    left: 0;
+  }
+
+  #switchCameraButton {
+    left: calc(20% - 32px);
+    top: calc(50% - 32px);
+  }
+
+  #toggleFullScreenButton {
+    left: calc(80% - 32px);
+    top: calc(50% - 32px);
+  }
+}
+
+@media screen and (orientation: landscape) {
+  #vid_container {
+    width: 80%;
+    height: 100%;
+  }
+
+  #vid_container.left {
+    left: 20%;
+  }
+
+  /* we default to right */
+  #gui_controls {
+    width: 20%;
+    height: 100%;
+    right: 0;
+  }
+
+  /* for the lefties */
+  #gui_controls.left {
+    left: 0;
+  }
+
+  #switchCameraButton {
+    left: calc(50% - 32px);
+    top: calc(18% - 32px);
+  }
+
+  #toggleFullScreenButton {
+    left: calc(50% - 32px);
+    top: calc(82% - 32px);
   }
 }
 </style>
