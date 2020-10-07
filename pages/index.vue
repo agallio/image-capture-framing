@@ -279,16 +279,16 @@ export default {
             angle = window.orientation;
           }
 
-          const guiControls = this.$refs.guiControls.classList;
-          const vidContainer = this.$refs.vidContainer.classList;
+          // const guiControls = this.$refs.guiControls.classList;
+          // const vidContainer = this.$refs.vidContainer.classList;
 
-          if (angle === 270 || angle === -90) {
-            guiControls.add("left");
-            vidContainer.add("left");
-          } else {
-            if (guiControls.contains("left")) guiControls.remove("left");
-            if (vidContainer.contains("left")) vidContainer.remove("left");
-          }
+          // if (angle === 270 || angle === -90) {
+          //   guiControls.add("left");
+          //   vidContainer.add("left");
+          // } else {
+          //   if (guiControls.contains("left")) guiControls.remove("left");
+          //   if (vidContainer.contains("left")) vidContainer.remove("left");
+          // }
         },
         false
       );
@@ -308,8 +308,8 @@ export default {
       const constraints = {
         audio: false,
         video: {
-          width: { ideal: size },
-          height: { ideal: size },
+          width: { min: 270, max: 270 },
+          height: { min: 480, max: 480 },
           facingMode: this.currentFacingMode,
         },
       };
@@ -565,7 +565,7 @@ export default {
 }
 
 .capturedImage {
-  width: 100%;
+  height: 80%;
 }
 
 .image-detail {
