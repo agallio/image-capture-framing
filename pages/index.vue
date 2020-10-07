@@ -140,6 +140,20 @@ export default {
     };
   },
   methods: {
+    detectIfiOS() {
+      return (
+        [
+          "iPad Simulator",
+          "iPhone Simulator",
+          "iPod Simulator",
+          "iPad",
+          "iPhone",
+          "iPod",
+        ].includes(navigator.platform) ||
+        // iPad on iOS 13 detection
+        (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+      );
+    },
     toggleCamera() {
       this.resetImage();
 
@@ -147,13 +161,17 @@ export default {
         this.capturedImage = null;
         this.isCameraOpen = false;
         this.isImageCaptured = false;
-        this.toggleFullScreen();
+        if (!this.detectIfiOS()) {
+          this.toggleFullScreen();
+        }
         this.stopCameraStream();
       } else {
         this.capturedImage = null;
         this.isCameraOpen = true;
         this.isImageCaptured = false;
-        this.toggleFullScreen();
+        if (!this.detectIfiOS()) {
+          this.toggleFullScreen();
+        }
         this.createCameraElement();
       }
     },
@@ -248,7 +266,7 @@ export default {
       //   console.log("iOS doesn't support fullscreen (yet)");
       // }
 
-      console.log(this.amountOfCameras);
+      alert(this.amountOfCameras);
       if (this.amountOfCameras > 1) {
         switchCameraButton.style.display = "block";
       }
@@ -345,6 +363,7 @@ export default {
 
       let width = video.videoWidth;
       let height = video.videoHeight;
+      alert(width, height);
 
       // let maxSize = 1024;
 
@@ -591,7 +610,7 @@ export default {
   .base {
     height: 204px;
     width: 323px;
-    transform: translate(-70%, -50%);
+    transform: translate(-80%, -50%);
     top: 50%;
     left: 50%;
   }
