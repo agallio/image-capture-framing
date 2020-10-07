@@ -10,27 +10,9 @@
         <div class="dialog-content">
           <div id="container" ref="container">
             <div id="vid_container" ref="vidContainer" class="">
-              <svg class="frame-overlay" width="100%" height="100%">
-                <mask id="mask">
-                  <rect fill="white" width="100%" height="100%" />
-                  <rect
-                    x="15%"
-                    y="15%"
-                    rx="30"
-                    ry="30"
-                    width="70%"
-                    height="70%"
-                  />
-                </mask>
-                <rect
-                  mask="url(#mask)"
-                  fill="rgb(0, 0, 0, .32)"
-                  width="100%"
-                  height="100%"
-                />
-              </svg>
               <video ref="video" id="video" autoplay playsinline></video>
               <div id="video_overlay">
+                <div class="base"></div>
                 <v-btn icon dark x-large @click="toggleCamera">
                   <v-icon>mdi-close</v-icon>
                 </v-btn>
@@ -75,7 +57,7 @@
         transition="dialog-bottom-transition"
       >
         <v-card>
-          <v-toolbar dark color="primary">
+          <v-toolbar dark color="#000">
             <v-btn icon dark @click="toggleCamera">
               <v-icon>mdi-close</v-icon>
             </v-btn>
@@ -85,7 +67,10 @@
               <v-btn dark text @click="isImageCaptured = false">Save</v-btn>
             </v-toolbar-items>
           </v-toolbar>
-          <img :src="capturedImage" alt="image" class="capturedImage" />
+
+          <div class="d-flex align-center justify-center preview">
+            <img :src="capturedImage" alt="image" class="capturedImage" />
+          </div>
         </v-card>
       </v-dialog>
 
@@ -269,9 +254,6 @@ export default {
       window.addEventListener(
         "orientationchange",
         () => {
-          this.isCameraOpen = false;
-          this.stopCameraStream();
-
           if (screen.orientation) {
             angle = screen.orientation.angle;
           } else {
@@ -490,6 +472,22 @@ export default {
   background-color: transparent;
 }
 
+.base {
+  position: absolute;
+  top: 70px;
+  right: 40px;
+  bottom: 200px;
+  left: 40px;
+  box-shadow: 0px 0px 20px 100px rgba(0, 0, 0, 0.6);
+  border: 1px solid #ffffff;
+  border-radius: 10px;
+}
+
+.preview {
+  background: #000;
+  height: calc(100vh - 56px);
+}
+
 .cam-btn {
   outline: none;
   position: absolute;
@@ -586,6 +584,13 @@ export default {
 }
 
 @media screen and (orientation: landscape) {
+  .base {
+    top: 40px;
+    right: 200px;
+    bottom: 40px;
+    left: 40px;
+  }
+
   #vid_container {
     width: 80%;
     height: 100%;
