@@ -347,7 +347,7 @@ export default {
       });
     },
     toggleSwitchCamera() {
-      if (currentFacingMode === "environment") {
+      if (this.currentFacingMode === "environment") {
         this.currentFacingMode = "user";
       } else {
         this.currentFacingMode = "environment";
