@@ -186,7 +186,6 @@ export default {
           .then((stream) => {
             stream.getTracks().forEach((track) => track.stop());
 
-            console.log("halo");
             this.deviceCount().then((deviceCount) => {
               this.amountOfCameras = deviceCount;
 
@@ -223,7 +222,7 @@ export default {
 
         navigator.mediaDevices
           .enumerateDevices()
-          .then((devices) =>
+          .then((devices) => {
             devices.forEach((device) => {
               if (device.kind === "video") {
                 device.kind = "videoinput";
@@ -233,10 +232,10 @@ export default {
                 videoInCount++;
                 console.log(`Videocam : ${device.label}`);
               }
+            });
 
-              resolve(videoInCount);
-            })
-          )
+            resolve(videoInCount);
+          })
           .catch((err) => {
             console.log(`${err.name} : ${err.message}`);
             resolve(0);
@@ -266,7 +265,6 @@ export default {
       //   console.log("iOS doesn't support fullscreen (yet)");
       // }
 
-      alert(this.amountOfCameras);
       if (this.amountOfCameras > 1) {
         switchCameraButton.style.display = "block";
       }
@@ -363,32 +361,17 @@ export default {
 
       let width = video.videoWidth;
       let height = video.videoHeight;
-      alert(width, height);
-
-      // let maxSize = 1024;
-
-      // if (width > height) {
-      //   if (width > maxSize) {
-      //     height *= maxSize / width;
-      //     width = maxSize;
-      //   }
-      // } else {
-      //   if (height > maxSize) {
-      //     width *= maxSize / height;
-      //     height = maxSize;
-      //   }
-      // }
 
       canvas.width = width;
       canvas.height = height;
 
-      let context = canvas.getContext("2d");
+      context = canvas.getContext("2d");
       context.drawImage(video, 0, 0, width, height);
 
       const getCanvasBlob = (canvas) => {
-        return new Promise((resolve) => {
-          canvas.toBlob((blob) => resolve(blob), "image/jpeg");
-        });
+        return new Promise((resolve) =>
+          canvas.toBlob((blob) => resolve(blob), "image/jpeg")
+        );
       };
 
       let imageFile;
