@@ -10,6 +10,25 @@
         <div class="dialog-content">
           <div id="container" ref="container">
             <div id="vid_container" ref="vidContainer">
+              <svg class="frame-overlay" width="100%" height="100%">
+                <mask id="mask">
+                  <rect fill="white" width="100%" height="100%" />
+                  <rect
+                    x="15%"
+                    y="15%"
+                    rx="30"
+                    ry="30"
+                    width="70%"
+                    height="70%"
+                  />
+                </mask>
+                <rect
+                  mask="url(#mask)"
+                  fill="rgb(0, 0, 0, .32)"
+                  width="100%"
+                  height="100%"
+                />
+              </svg>
               <video ref="video" id="video" autoplay playsinline></video>
               <div id="video_overlay">
                 <v-btn icon dark x-large @click="toggleCamera">
@@ -65,7 +84,7 @@ export default {
       // Camera
       video: null,
       amountOfCameras: 0,
-      currentFacingMode: "environment",
+      currentFacingMode: "environment"
     };
   },
   methods: {
@@ -86,11 +105,11 @@ export default {
       ) {
         navigator.mediaDevices
           .getUserMedia({ audio: false, video: true })
-          .then((stream) => {
-            stream.getTracks().forEach((track) => track.stop());
+          .then(stream => {
+            stream.getTracks().forEach(track => track.stop());
 
             console.log("halo");
-            this.deviceCount().then((deviceCount) => {
+            this.deviceCount().then(deviceCount => {
               this.amountOfCameras = deviceCount;
 
               // Init the UI and the camera stream
@@ -98,7 +117,7 @@ export default {
               this.initCameraStream();
             });
           })
-          .catch((err) => {
+          .catch(err => {
             if (err === "PermissionDeniedError") {
               alert("Permission denied. Please refresh and give permission.");
             }
@@ -115,19 +134,19 @@ export default {
     stopCameraStream() {
       let tracks = this.$refs.video.srcObject.getTracks();
 
-      tracks.forEach((track) => {
+      tracks.forEach(track => {
         track.stop();
       });
     },
 
     deviceCount() {
-      return new Promise((resolve) => {
+      return new Promise(resolve => {
         let videoInCount = 0;
 
         navigator.mediaDevices
           .enumerateDevices()
-          .then((devices) =>
-            devices.forEach((device) => {
+          .then(devices =>
+            devices.forEach(device => {
               if (device.kind === "video") {
                 device.kind = "videoinput";
               }
@@ -140,7 +159,7 @@ export default {
               resolve(videoInCount);
             })
           )
-          .catch((err) => {
+          .catch(err => {
             console.log(`${err.name} : ${err.message}`);
             resolve(0);
           });
@@ -202,7 +221,7 @@ export default {
       const switchCameraButton = this.$refs.switchCameraButton;
 
       if (window.stream) {
-        window.stream.getTracks().forEach((track) => {
+        window.stream.getTracks().forEach(track => {
           console.log(track);
           track.stop();
         });
@@ -214,13 +233,13 @@ export default {
         video: {
           width: { ideal: size },
           height: { ideal: size },
-          facingMode: this.currentFacingMode,
-        },
+          facingMode: this.currentFacingMode
+        }
       };
 
       navigator.mediaDevices
         .getUserMedia(constraints)
-        .then((stream) => {
+        .then(stream => {
           window.stream = stream;
           video.srcObject = stream;
 
@@ -236,7 +255,7 @@ export default {
           const settings = track.getSettings();
           console.log(`Settings : ${JSON.stringify(settings, null, 4)}`);
         })
-        .catch((err) => console.error(`getUserMedia() error : ${err}`));
+        .catch(err => console.error(`getUserMedia() error : ${err}`));
     },
     takePhotoButton() {
       this.takeSnapshot();
@@ -272,21 +291,27 @@ export default {
       let context = canvas.getContext("2d");
       context.drawImage(video, 0, 0, width, height);
 
-      const getCanvasBlob = (canvas) => {
-        return new Promise((resolve) => {
-          canvas.toBlob((blob) => resolve(blob), "image/jpeg");
+      const getCanvasBlob = canvas => {
+        return new Promise(resolve => {
+          canvas.toBlob(blob => resolve(blob), "image/jpeg");
         });
       };
 
-      getCanvasBlob(canvas).then((blob) => {
+      getCanvasBlob(canvas).then(blob => {
         console.log(blob);
       });
-    },
-  },
+    }
+  }
 };
 </script>
 
 <style lang="scss">
+.frame-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
 .dialog-content {
   margin: 0;
   padding: 0;
