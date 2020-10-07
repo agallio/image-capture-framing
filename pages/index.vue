@@ -147,11 +147,13 @@ export default {
         this.capturedImage = null;
         this.isCameraOpen = false;
         this.isImageCaptured = false;
+        this.toggleFullScreen();
         this.stopCameraStream();
       } else {
         this.capturedImage = null;
         this.isCameraOpen = true;
         this.isImageCaptured = false;
+        this.toggleFullScreen();
         this.createCameraElement();
       }
     },
@@ -228,24 +230,25 @@ export default {
       const toggleFullScreenButton = this.$refs.toggleFullScreenButton;
       const switchCameraButton = this.$refs.switchCameraButton;
 
-      const fullScreenChange = () => {
-        if (screenfull.isFullscreen) {
-          toggleFullScreenButton.setAttribute("aria-pressed", true);
-        } else {
-          toggleFullScreenButton.setAttribute("aria-pressed", false);
-        }
-      };
+      // const fullScreenChange = () => {
+      //   if (screenfull.isFullscreen) {
+      //     toggleFullScreenButton.setAttribute("aria-pressed", true);
+      //   } else {
+      //     toggleFullScreenButton.setAttribute("aria-pressed", false);
+      //   }
+      // };
 
-      if (screenfull.isEnabled) {
-        screenfull.on("change", fullScreenChange);
+      // if (screenfull.isEnabled) {
+      //   screenfull.on("change", fullScreenChange);
 
-        toggleFullScreenButton.style.display = "block";
+      //   toggleFullScreenButton.style.display = "block";
 
-        fullScreenChange();
-      } else {
-        console.log("iOS doesn't support fullscreen (yet)");
-      }
+      //   fullScreenChange();
+      // } else {
+      //   console.log("iOS doesn't support fullscreen (yet)");
+      // }
 
+      console.log(this.amountOfCameras);
       if (this.amountOfCameras > 1) {
         switchCameraButton.style.display = "block";
       }
@@ -343,19 +346,19 @@ export default {
       let width = video.videoWidth;
       let height = video.videoHeight;
 
-      let maxSize = 1024;
+      // let maxSize = 1024;
 
-      if (width > height) {
-        if (width > maxSize) {
-          height *= maxSize / width;
-          width = maxSize;
-        }
-      } else {
-        if (height > maxSize) {
-          width *= maxSize / height;
-          height = maxSize;
-        }
-      }
+      // if (width > height) {
+      //   if (width > maxSize) {
+      //     height *= maxSize / width;
+      //     width = maxSize;
+      //   }
+      // } else {
+      //   if (height > maxSize) {
+      //     width *= maxSize / height;
+      //     height = maxSize;
+      //   }
+      // }
 
       canvas.width = width;
       canvas.height = height;
@@ -474,13 +477,14 @@ export default {
 
 .base {
   position: absolute;
-  top: 70px;
-  right: 40px;
-  bottom: 200px;
-  left: 40px;
-  box-shadow: 0px 0px 20px 100px rgba(0, 0, 0, 0.6);
+  width: 204px;
+  height: 323px;
+  box-shadow: 0px 0px 20px 200px rgba(0, 0, 0, 0.6);
   border: 1px solid #ffffff;
   border-radius: 10px;
+  transform: translate(-50%, -70%);
+  top: 50%;
+  left: 50%;
 }
 
 .preview {
@@ -585,10 +589,11 @@ export default {
 
 @media screen and (orientation: landscape) {
   .base {
-    top: 40px;
-    right: 200px;
-    bottom: 40px;
-    left: 40px;
+    height: 204px;
+    width: 323px;
+    transform: translate(-70%, -50%);
+    top: 50%;
+    left: 50%;
   }
 
   #vid_container {
