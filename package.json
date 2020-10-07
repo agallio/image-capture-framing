@@ -16,6 +16,7 @@
     "screenfull": "^5.0.2"
   },
   "devDependencies": {
+    "@nuxtjs/vercel-builder": "^0.17.12",
     "@nuxtjs/vuetify": "^1.11.2"
   }
 }
