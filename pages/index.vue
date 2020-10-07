@@ -187,7 +187,7 @@ export default {
             stream.getTracks().forEach((track) => track.stop());
 
             this.deviceCount().then((deviceCount) => {
-              this.amountOfCameras = deviceCount;
+              this.amountOfCameras = 0;
 
               // Init the UI and the camera stream
               this.initCameraUI();
