@@ -9,7 +9,7 @@
       >
         <div class="dialog-content">
           <div id="container" ref="container">
-            <div id="vid_container" ref="vidContainer">
+            <div id="vid_container" ref="vidContainer" class="">
               <svg class="frame-overlay" width="100%" height="100%">
                 <mask id="mask">
                   <rect fill="white" width="100%" height="100%" />
@@ -36,7 +36,7 @@
                 </v-btn>
               </div>
             </div>
-            <div id="gui_controls" ref="guiControls">
+            <div id="gui_controls" ref="guiControls" class="">
               <button
                 class="cam-btn"
                 ref="switchCameraButton"
@@ -68,7 +68,65 @@
         </div>
       </v-dialog>
 
-      <v-btn depressed @click="toggleCamera">Buka Kamera</v-btn>
+      <v-dialog
+        v-model="isImageCaptured"
+        fullscreen
+        hide-overlay
+        transition="dialog-bottom-transition"
+      >
+        <v-card>
+          <v-toolbar dark color="primary">
+            <v-btn icon dark @click="toggleCamera">
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
+            <v-toolbar-title>Image Captured!</v-toolbar-title>
+            <v-spacer></v-spacer>
+            <v-toolbar-items>
+              <v-btn dark text @click="isImageCaptured = false">Save</v-btn>
+            </v-toolbar-items>
+          </v-toolbar>
+          <img :src="capturedImage" alt="image" class="capturedImage" />
+        </v-card>
+      </v-dialog>
+
+      <h2 class="h2 mb-4">Image Capture &amp; Compressor</h2>
+
+      <img
+        v-if="capturedImage"
+        :src="capturedImage"
+        alt="image"
+        class="capturedImage"
+      />
+
+      <v-btn depressed block @click="toggleCamera">Buka Kamera</v-btn>
+      <v-btn
+        depressed
+        block
+        color="warning"
+        class="mt-2"
+        :disabled="!capturedImageData"
+        @click="checkImageSize"
+        >Send</v-btn
+      >
+
+      <div class="image-detail">
+        <template v-if="imageDetail.width > 0">
+          <p class="my-0">Size : {{ imageDetail.size }}</p>
+          <p class="my-0">Width : {{ imageDetail.width }}</p>
+          <p class="my-0">Height: {{ imageDetail.height }}</p>
+        </template>
+        <template v-else>Upload image first!</template>
+      </div>
+
+      <v-btn
+        depressed
+        block
+        class="mt-2"
+        color="primary"
+        :disabled="imageDetail.width === 0"
+        @click="downloadImage"
+        >Download</v-btn
+      >
     </v-col>
   </v-row>
 </template>
@@ -80,20 +138,35 @@ export default {
   data() {
     return {
       isCameraOpen: false,
+      isImageCaptured: false,
+      imageReady: false,
+      imageDetail: {
+        width: 0,
+        height: 0,
+        size: "",
+      },
 
       // Camera
       video: null,
+      capturedImage: null,
+      capturedImageData: null,
       amountOfCameras: 0,
-      currentFacingMode: "environment"
+      currentFacingMode: "environment",
     };
   },
   methods: {
     toggleCamera() {
+      this.resetImage();
+
       if (this.isCameraOpen) {
+        this.capturedImage = null;
         this.isCameraOpen = false;
+        this.isImageCaptured = false;
         this.stopCameraStream();
       } else {
+        this.capturedImage = null;
         this.isCameraOpen = true;
+        this.isImageCaptured = false;
         this.createCameraElement();
       }
     },
@@ -105,11 +178,11 @@ export default {
       ) {
         navigator.mediaDevices
           .getUserMedia({ audio: false, video: true })
-          .then(stream => {
-            stream.getTracks().forEach(track => track.stop());
+          .then((stream) => {
+            stream.getTracks().forEach((track) => track.stop());
 
             console.log("halo");
-            this.deviceCount().then(deviceCount => {
+            this.deviceCount().then((deviceCount) => {
               this.amountOfCameras = deviceCount;
 
               // Init the UI and the camera stream
@@ -117,7 +190,7 @@ export default {
               this.initCameraStream();
             });
           })
-          .catch(err => {
+          .catch((err) => {
             if (err === "PermissionDeniedError") {
               alert("Permission denied. Please refresh and give permission.");
             }
@@ -134,19 +207,19 @@ export default {
     stopCameraStream() {
       let tracks = this.$refs.video.srcObject.getTracks();
 
-      tracks.forEach(track => {
+      tracks.forEach((track) => {
         track.stop();
       });
     },
 
     deviceCount() {
-      return new Promise(resolve => {
+      return new Promise((resolve) => {
         let videoInCount = 0;
 
         navigator.mediaDevices
           .enumerateDevices()
-          .then(devices =>
-            devices.forEach(device => {
+          .then((devices) =>
+            devices.forEach((device) => {
               if (device.kind === "video") {
                 device.kind = "videoinput";
               }
@@ -159,7 +232,7 @@ export default {
               resolve(videoInCount);
             })
           )
-          .catch(err => {
+          .catch((err) => {
             console.log(`${err.name} : ${err.message}`);
             resolve(0);
           });
@@ -221,7 +294,7 @@ export default {
       const switchCameraButton = this.$refs.switchCameraButton;
 
       if (window.stream) {
-        window.stream.getTracks().forEach(track => {
+        window.stream.getTracks().forEach((track) => {
           console.log(track);
           track.stop();
         });
@@ -233,13 +306,13 @@ export default {
         video: {
           width: { ideal: size },
           height: { ideal: size },
-          facingMode: this.currentFacingMode
-        }
+          facingMode: this.currentFacingMode,
+        },
       };
 
       navigator.mediaDevices
         .getUserMedia(constraints)
-        .then(stream => {
+        .then((stream) => {
           window.stream = stream;
           video.srcObject = stream;
 
@@ -255,7 +328,7 @@ export default {
           const settings = track.getSettings();
           console.log(`Settings : ${JSON.stringify(settings, null, 4)}`);
         })
-        .catch(err => console.error(`getUserMedia() error : ${err}`));
+        .catch((err) => console.error(`getUserMedia() error : ${err}`));
     },
     takePhotoButton() {
       this.takeSnapshot();
@@ -285,23 +358,84 @@ export default {
       let width = video.videoWidth;
       let height = video.videoHeight;
 
+      let maxSize = 1024;
+
+      if (width > height) {
+        if (width > maxSize) {
+          height *= maxSize / width;
+          width = maxSize;
+        }
+      } else {
+        if (height > maxSize) {
+          width *= maxSize / height;
+          height = maxSize;
+        }
+      }
+
       canvas.width = width;
       canvas.height = height;
 
       let context = canvas.getContext("2d");
       context.drawImage(video, 0, 0, width, height);
 
-      const getCanvasBlob = canvas => {
-        return new Promise(resolve => {
-          canvas.toBlob(blob => resolve(blob), "image/jpeg");
+      const getCanvasBlob = (canvas) => {
+        return new Promise((resolve) => {
+          canvas.toBlob((blob) => resolve(blob), "image/jpeg");
         });
       };
 
-      getCanvasBlob(canvas).then(blob => {
-        console.log(blob);
+      let imageFile;
+      getCanvasBlob(canvas).then((blob) => {
+        imageFile = new File([blob], "image.jpg", { type: "image/jpeg" });
+        this.toggleCamera();
+        this.capturedImage =
+          imageFile && imageFile instanceof File
+            ? URL.createObjectURL(imageFile)
+            : null;
+        this.capturedImageData = imageFile;
+        this.isImageCaptured = true;
       });
-    }
-  }
+    },
+
+    resetImage() {
+      this.imageDetail = {
+        width: 0,
+        height: 0,
+        size: "",
+      };
+      this.imageReady = false;
+    },
+    checkImageSize() {
+      let it = this;
+      var fr = new FileReader();
+      fr.onload = function () {
+        var img = new Image();
+
+        img.onload = function () {
+          it.imageDetail = {
+            width: img.width,
+            height: img.height,
+            size: Math.floor(it.capturedImageData.size / 1000) + "KB",
+          };
+          it.imageReady = true;
+        };
+
+        img.src = fr.result;
+      };
+      fr.readAsDataURL(this.capturedImageData);
+    },
+    downloadImage() {
+      let a = document.createElement("a");
+      document.body.appendChild(a);
+      a.style = "display: none";
+      let blob = new Blob([this.capturedImageData], { type: "octet/stream" }),
+        url = window.URL.createObjectURL(blob);
+      a.href = url;
+      a.download = "image.jpg";
+      a.click();
+      window.URL.revokeObjectURL(url);
+    },
+  },
 };
 </script>
 
@@ -407,6 +541,17 @@ export default {
 
 #switchCameraButton[aria-pressed="true"] {
   background-image: url("/ic_camera_front_white_36px.svg");
+}
+
+.capturedImage {
+  width: 100%;
+}
+
+.image-detail {
+  margin-top: 10px;
+  padding: 10px 20px;
+  text-align: left;
+  background: #f0f0f0;
 }
 
 @media screen and (orientation: portrait) {
